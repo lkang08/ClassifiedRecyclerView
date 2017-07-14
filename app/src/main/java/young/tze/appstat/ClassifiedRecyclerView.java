@@ -6,6 +6,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.inputmethod.InputMethodManager;
 
 import java.util.ArrayList;
 
@@ -18,6 +20,15 @@ public class ClassifiedRecyclerView extends RecyclerView implements IndexBar.Ind
 
     public ClassifiedRecyclerView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent e) {
+        if (e.getAction() == MotionEvent.ACTION_DOWN) {
+            InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(getWindowToken(), 0);
+        }
+        return super.onTouchEvent(e);
     }
 
     @Override

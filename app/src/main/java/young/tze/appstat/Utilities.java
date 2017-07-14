@@ -24,6 +24,15 @@ public class Utilities {
         return str.substring(start, str.length());
     }
 
+    public static int getStatusbarHeight(Context context) {
+        int result = 0;
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = context.getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
     public static DisplayMetrics getDisplayMetrics(Context context) {
         if (mDM == null) {
             mDM = new DisplayMetrics();

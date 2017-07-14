@@ -28,6 +28,9 @@ public class RecyclerViewDecoration extends RecyclerView.ItemDecoration {
     private int mLabelTextColor;
     private int mFloatCircleColor;
     private int mFloatCircleRadius;
+    private boolean mReverse = true;
+    private int mStatusBarHeight;
+    private int mEditTextHeight;
 
     private Paint mLabelTextPaint;
     private Paint mFloatCirclePaint;
@@ -69,6 +72,8 @@ public class RecyclerViewDecoration extends RecyclerView.ItemDecoration {
         mFloatCircleTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
         mFloatCircleTextPaint.setTextSize(2 * mItemLabelTextSize);
 
+        mEditTextHeight = context.getResources().getDimensionPixelSize(R.dimen.edittext_height);
+        mStatusBarHeight = Utilities.getStatusbarHeight(context);
         if (context instanceof Activity) {
             Activity activity = (Activity) context;
             mItemDivider = activity.getResources().getDrawable(R.drawable.recycler_view_divider, null);
@@ -76,23 +81,43 @@ public class RecyclerViewDecoration extends RecyclerView.ItemDecoration {
         }
     }
 
-    @Override
-    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
-        super.onDraw(c, parent, state);
+    public void setDataList(ArrayList<ItemInfo> itemInfos) {
+        mItemInfos = itemInfos;
+    }
+
+    private void drawGroupViewReverse(Canvas c, RecyclerView parent) {
+        if (mItemInfos.size() == 0)
+            return;
         int childCount = parent.getChildCount();
+        int itemCount = mItemInfos.size();
+        //Log.d("lk", "drawGroupView childCount =  " + childCount);
         for (int i = 0; i < childCount; i++) {
             View itemView = parent.getChildAt(i);
             int j = parent.getChildAdapterPosition(itemView);
             ItemInfo itemInfo = mItemInfos.get(j);
             //第0个位置不需要绘制
-            if (j > 0) {
-                ItemInfo previousItemInfo = mItemInfos.get(j - 1);
-                if (previousItemInfo.getAppNameInPinyin().charAt(0) != itemInfo.getAppNameInPinyin().charAt(0)) {
+            if (j == 0) {
+                /*mItemGap.setBounds(0, itemView.getBottom() + mItemLabelHeight + mItemDividerHeight,
+                        parent.getWidth(), itemView.getBottom() + mItemLabelHeight + mItemDividerHeight + mItemGapHeight);
+                mItemGap.draw(c);*/
+                mLabelTextPaint.setAntiAlias(true);
+                char labelTitle = Character.toUpperCase(itemInfo.getAppNameInPinyin().charAt(0));
+                if (!Character.isLetter(labelTitle)) {
+                    labelTitle = '#';
+                }
+                c.drawText("" + labelTitle, mItemMargin,
+                        itemView.getBottom() + mItemDividerHeight + mItemLabelTextTopPadding, mLabelTextPaint);
+                mLabelTextPaint.setAntiAlias(false);
+                mItemDivider.setBounds(mItemMargin, itemView.getBottom(), itemView.getWidth() + mItemMargin, itemView.getBottom() + mItemDividerHeight);
+                mItemDivider.draw(c);
+            } else if (j < itemCount) {
+                ItemInfo preItemInfo = mItemInfos.get(j - 1);
+                if (preItemInfo.getAppNameInPinyin().charAt(0) != itemInfo.getAppNameInPinyin().charAt(0)) {
                     //需要绘item上方item gap、label title及divider分隔线
-                    if ((previousItemInfo.getAppNameInPinyin().charAt(0) >= 'a' && previousItemInfo.getAppNameInPinyin().charAt(0) <= 'z')
+                    if ((preItemInfo.getAppNameInPinyin().charAt(0) >= 'a' && preItemInfo.getAppNameInPinyin().charAt(0) <= 'z')
                             || (itemInfo.getAppNameInPinyin().charAt(0) >= 'a' && itemInfo.getAppNameInPinyin().charAt(0) <= 'z')) {
-                        mItemGap.setBounds(0, itemView.getTop() - mItemDividerHeight - mItemLabelHeight - mItemGapHeight,
-                                parent.getWidth(), itemView.getTop() - mItemDividerHeight - mItemLabelHeight);
+                        mItemGap.setBounds(0, itemView.getBottom() + mItemLabelHeight + mItemDividerHeight,
+                                parent.getWidth(), itemView.getBottom() + mItemLabelHeight + mItemDividerHeight + mItemGapHeight);
                         mItemGap.draw(c);
                         mLabelTextPaint.setAntiAlias(true);
                         char labelTitle = Character.toUpperCase(itemInfo.getAppNameInPinyin().charAt(0));
@@ -100,15 +125,14 @@ public class RecyclerViewDecoration extends RecyclerView.ItemDecoration {
                             labelTitle = '#';
                         }
                         c.drawText("" + labelTitle, mItemMargin,
-                                itemView.getTop() - mItemDividerHeight - mItemLabelHeight + mItemLabelTextTopPadding, mLabelTextPaint);
-
+                                itemView.getBottom() + mItemDividerHeight + mItemLabelTextTopPadding, mLabelTextPaint);
                         mLabelTextPaint.setAntiAlias(false);
-                        mItemDivider.setBounds(mItemMargin, itemView.getTop() - mItemDividerHeight, itemView.getWidth() + mItemMargin, itemView.getTop());
+                        mItemDivider.setBounds(mItemMargin, itemView.getBottom(), itemView.getWidth() + mItemMargin, itemView.getBottom() + mItemDividerHeight);
                         mItemDivider.draw(c);
                     }
                 } else {
-                    //仅绘item上方的divider分隔线
-                    mItemDivider.setBounds(mItemMargin, itemView.getTop() - mItemDividerHeight, itemView.getWidth() + mItemMargin, itemView.getTop());
+                    //仅绘item下方的divider分隔线
+                    mItemDivider.setBounds(mItemMargin, itemView.getBottom(), itemView.getWidth() + mItemMargin, itemView.getBottom() + mItemDividerHeight);
                     mItemDivider.draw(c);
                 }
             }
@@ -116,36 +140,51 @@ public class RecyclerViewDecoration extends RecyclerView.ItemDecoration {
     }
 
     @Override
-    public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
-        super.onDrawOver(c, parent, state);
-        View firstChild = parent.getChildAt(0);
-        ItemInfo firstItemInfo = mItemInfos.get(parent.getChildAdapterPosition(firstChild));
-        char floatLabelTitle = Character.toUpperCase(firstItemInfo.getAppNameInPinyin().charAt(0));
+    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        super.onDraw(c, parent, state);
+        drawGroupViewReverse(c, parent);
+    }
+
+    private void drawSuspendView(Canvas c, RecyclerView parent) {
+        if (mItemInfos.size() == 0) {
+            return;
+        }
+        //int lastChildIndex = parent.getChildCount() - 1;
+        View lastChild = parent.getChildAt(0);
+        ItemInfo lastItemInfo = mItemInfos.get(parent.getChildAdapterPosition(lastChild));
+        char floatLabelTitle = Character.toUpperCase(lastItemInfo.getAppNameInPinyin().charAt(0));
         int floatLabelTranslationY = 0;
-        char floatCircleTitle = firstItemInfo.getAppNameInDefault().charAt(0);
+        int screenHeight = Utilities.getDisplayMetrics(parent.getContext()).heightPixels - mEditTextHeight;
+        char floatCircleTitle = lastItemInfo.getAppNameInDefault().charAt(0);
         for (int i = 0; i < parent.getChildCount(); i++) {
             View childView = parent.getChildAt(i);
-            //找到当前recyclerView中第一个带有Label的Item
+            int adapterPosition = parent.getChildAdapterPosition(childView);
+            if (adapterPosition == 0) {
+                continue;
+            }
+            //找到当前recyclerView中最后一个带有Label的Item
             if (parent.findChildViewUnder(mItemMargin + childView.getWidth() / 2,
-                    childView.getTop() - mItemDividerHeight - mItemLabelHeight / 2) == null) {
-                //第二个Label将第一个Label顶上去的情况
-                if (childView.getTop() > mItemLabelHeight + mItemDividerHeight
-                        && childView.getTop() < 2 * (mItemLabelHeight + mItemDividerHeight)) {
-                    int adapterPosition = parent.getChildAdapterPosition(childView);
+                    childView.getBottom() + mItemDividerHeight + mItemLabelHeight / 2) == null) {
+                if ((childView.getBottom() > screenHeight - mStatusBarHeight - 2 * mItemLabelHeight - mItemDividerHeight)
+                        && childView.getBottom() < screenHeight - mStatusBarHeight - mItemLabelHeight - mItemDividerHeight) {
                     floatLabelTitle = Character.toUpperCase(mItemInfos.get(adapterPosition - 1).getAppNameInPinyin().charAt(0));
-                    floatLabelTranslationY = childView.getTop() - 2 * (mItemLabelHeight + mItemDividerHeight);
+                    floatLabelTranslationY = mItemLabelHeight - ((screenHeight - mStatusBarHeight - childView.getBottom() - mItemDividerHeight - mItemLabelHeight));
                     break;
+                } else {
+                    floatLabelTranslationY = 0;
                 }
             }
         }
-        c.drawRect(new Rect(0, floatLabelTranslationY, parent.getWidth(), mItemLabelHeight + floatLabelTranslationY), mLabelAreaPaint);
-        mItemDivider.setBounds(0, mItemLabelHeight + floatLabelTranslationY, parent.getWidth(), mItemLabelHeight + mItemDividerHeight + floatLabelTranslationY);
+        c.drawRect(new Rect(0, screenHeight - mItemLabelHeight - mStatusBarHeight + floatLabelTranslationY,
+                parent.getWidth(), screenHeight - mStatusBarHeight + floatLabelTranslationY), mLabelAreaPaint);
+        mItemDivider.setBounds(0, screenHeight - mItemLabelHeight - mItemDividerHeight - mStatusBarHeight + floatLabelTranslationY,
+                parent.getWidth(), screenHeight - mItemLabelHeight - mStatusBarHeight);
         mItemDivider.draw(c);
         mLabelTextPaint.setAntiAlias(true);
         if (!Character.isLetter(floatLabelTitle)) {
             floatLabelTitle = '#';
         }
-        c.drawText("" + floatLabelTitle, mItemMargin, mItemLabelTextTopPadding + floatLabelTranslationY, mLabelTextPaint);
+        c.drawText("" + floatLabelTitle, mItemMargin, mItemLabelTextTopPadding + screenHeight - mItemLabelHeight - mStatusBarHeight + floatLabelTranslationY, mLabelTextPaint);
         mLabelTextPaint.setAntiAlias(false);
 
         if (parent.getScrollState() != RecyclerView.SCROLL_STATE_IDLE) {
@@ -165,21 +204,29 @@ public class RecyclerViewDecoration extends RecyclerView.ItemDecoration {
     }
 
     @Override
+    public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        super.onDrawOver(c, parent, state);
+        drawSuspendView(c, parent);
+    }
+
+    @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
         super.getItemOffsets(outRect, view, parent, state);
+        int count = mItemInfos.size();
         int childPosition = parent.getChildAdapterPosition(view);
+        ItemInfo itemInfo = mItemInfos.get(childPosition);
         if (childPosition == 0) {
-            outRect.set(0, mItemLabelHeight + mItemDividerHeight, 0, 0);
+            outRect.set(0, 0, 0, mItemLabelHeight + mItemDividerHeight);
         } else {
-            ItemInfo previousItemInfo = mItemInfos.get(childPosition - 1);
-            ItemInfo itemInfo = mItemInfos.get(childPosition);
-            if (previousItemInfo.getAppNameInPinyin().charAt(0) != itemInfo.getAppNameInPinyin().charAt(0)) {
-                if ((previousItemInfo.getAppNameInPinyin().charAt(0) >= 'a' && previousItemInfo.getAppNameInPinyin().charAt(0) <= 'z')
+            ItemInfo nextItemInfo = mItemInfos.get(childPosition - 1);
+
+            if (nextItemInfo.getAppNameInPinyin().charAt(0) != itemInfo.getAppNameInPinyin().charAt(0)) {
+                if ((nextItemInfo.getAppNameInPinyin().charAt(0) >= 'a' && nextItemInfo.getAppNameInPinyin().charAt(0) <= 'z')
                         || (itemInfo.getAppNameInPinyin().charAt(0) >= 'a' && itemInfo.getAppNameInPinyin().charAt(0) <= 'z')) {
-                    outRect.set(0, mItemGapHeight + mItemLabelHeight + mItemDividerHeight, 0, 0);
+                    outRect.set(0, 0, 0, mItemGapHeight + mItemLabelHeight + mItemDividerHeight);
                 }
             } else {
-                outRect.set(0, mItemDividerHeight, 0, 0);
+                outRect.set(0, 0, 0, mItemDividerHeight);
             }
         }
     }

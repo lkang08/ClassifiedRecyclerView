@@ -9,9 +9,20 @@
     <young.tze.appstat.ClassifiedRecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="@dimen/edittext_height"
         android:paddingLeft="@dimen/item_margin"
         android:visibility="gone" />
+
+    <EditText
+        android:id="@+id/edittext"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/edittext_height"
+        android:layout_gravity="bottom"
+        android:background="@color/itemGapColor"
+        android:paddingLeft="@dimen/item_margin"
+        android:visibility="visible" />
 
     <young.tze.appstat.IndexBar
         android:id="@+id/index_bar"
@@ -19,7 +30,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="right"
         android:visibility="gone" />
-
 
     <RelativeLayout
         android:id="@+id/progress_bar_container"

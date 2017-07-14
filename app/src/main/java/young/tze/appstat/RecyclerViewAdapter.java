@@ -26,6 +26,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         this.mItemHeight = context.getResources().getDimensionPixelSize(R.dimen.item_icon_height);
     }
 
+    public void setDataList(ArrayList<ItemInfo> itemInfos){
+        mItemInfos = itemInfos;
+    }
     public ArrayList<ItemInfo> getDataList() {
         return mItemInfos;
     }

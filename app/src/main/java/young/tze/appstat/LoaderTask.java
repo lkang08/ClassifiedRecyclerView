@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.View;
 
 import com.github.stuxuhai.jpinyin.PinyinException;
@@ -24,7 +25,7 @@ import java.util.PriorityQueue;
  * Created by Yangzhi on 2017-06-27.
  */
 
-public class LoaderTask extends AsyncTask<Void, Void, ArrayList<ItemInfo>> {
+public class LoaderTask extends AsyncTask<String, Void, ArrayList<ItemInfo>> {
     private WeakReference<Context> mContext;
     private RecyclerView mRecyclerView;
     private View mProgressBarContainer;
@@ -43,11 +44,12 @@ public class LoaderTask extends AsyncTask<Void, Void, ArrayList<ItemInfo>> {
     }
 
     @Override
-    protected ArrayList<ItemInfo> doInBackground(Void... params) {
+    protected ArrayList<ItemInfo> doInBackground(String... params) {
         Context context = mContext.get();
         if (context == null) {
             return null;
         }
+        String queryText = params[0];
         PackageManager pm = context.getPackageManager();
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_MAIN);
@@ -70,8 +72,20 @@ public class LoaderTask extends AsyncTask<Void, Void, ArrayList<ItemInfo>> {
         }
         ArrayList<ItemInfo> arrayList = new ArrayList<>();
         ItemInfo itemInfo;
+        boolean isQueryEmpty = TextUtils.isEmpty(queryText);
         while ((itemInfo = itemInfos.poll()) != null) {
-            arrayList.add(itemInfo);
+            if (isQueryEmpty) {
+                arrayList.add(itemInfo);
+            } else {
+                try {
+                    String queryPinyin = PinyinHelper.convertToPinyinString(queryText, "", PinyinFormat.WITHOUT_TONE);
+                    if (itemInfo.getAppNameInDefault().contains(queryText) || itemInfo.getAppNameInPinyin().contains(queryPinyin)) {
+                        arrayList.add(itemInfo);
+                    }
+                } catch (PinyinException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return arrayList;
     }
@@ -80,11 +94,9 @@ public class LoaderTask extends AsyncTask<Void, Void, ArrayList<ItemInfo>> {
     @Override
     protected void onPostExecute(final ArrayList<ItemInfo> itemInfos) {
         Context context = mContext.get();
-        mProgressBarContainer.setVisibility(View.GONE);
-        mRecyclerView.setVisibility(View.VISIBLE);
-        mIndexBar.setVisibility(View.VISIBLE);
-        mRecyclerView.addItemDecoration(new RecyclerViewDecoration(mContext.get(), itemInfos));
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
-        mRecyclerView.setAdapter(new RecyclerViewAdapter(context, itemInfos));
+        if (context != null && context instanceof MainActivity) {
+            MainActivity activity = (MainActivity) context;
+            activity.updateData(itemInfos);
+        }
     }
 }

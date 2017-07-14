@@ -6,7 +6,7 @@
     <dimen name="item_label_height">30dp</dimen>
     <dimen name="item_drawable_size">72dp</dimen>
     <dimen name="item_icon_height">52dp</dimen>
-    <dimen name="item_divider_height">1dp</dimen>
+    <dimen name="item_divider_height">2dp</dimen>
     <dimen name="item_gap_height">10dp</dimen>
 
     <dimen name="item_label_text_top_padding">20dp</dimen>
@@ -16,4 +16,11 @@
     <dimen name="index_bar_text_leading">10dp</dimen>
     <dimen name="index_bar_top_padding">100dp</dimen>
     <dimen name="index_bar_padding">8dp</dimen>
+    <dimen name="margin_bottom">15dp</dimen>
+
+    <dimen name="group_height">36dp</dimen>
+    <dimen name="item_height">36dp</dimen>
+
+    <dimen name="edittext_height">36dp</dimen>
+    <dimen name="edittext_margin">5dp</dimen>
 </resources>
